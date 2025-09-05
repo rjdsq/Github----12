@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GitHub 仓库管理器 - 释放您的代码潜能</title>
+    <style>
+        :root {
+            --bg-color: #0d0c22; --primary-glow: #00f5c3; --secondary-glow: #ff2e88;
+            --text-primary: #f0f8ff; --text-secondary: #a9a9d4; --card-bg: rgba(22, 21, 47, 0.7);
+            --border-color: rgba(0, 245, 195, 0.3);
+            --font-family: 'Noto Sans SC', 'Helvetica Neue', Arial, sans-serif;
+        }
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+        body {
+            font-family: var(--font-family); background-color: var(--bg-color);
+            color: var(--text-primary); line-height: 1.7; overflow-x: hidden;
+        }
+
+        #particle-canvas { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -1; }
+
+        .container {
+            width: 95%; max-width: 1100px; margin: 0 auto;
+            display: flex; flex-direction: column; gap: 4rem;
+            position: relative; z-index: 1; padding: 2rem 0;
+        }
+
+        .hero {
+            display: flex; flex-direction: column; align-items: center; text-align: center;
+            justify-content: center; min-height: 100vh;
+            padding: 1rem;
+        }
+
+        .hero h2 {
+        white-space: nowrap;
+            font-size: 2.4rem;
+            font-weight: 700; letter-spacing: 1px;
+            background: linear-gradient(90deg, var(--primary-glow), var(--secondary-glow), #5773ff);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            animation: gradient-text-flow 5s ease infinite; background-size: 200% 200%;
+        }
+
+        .hero p.subtitle {
+            font-size: 1rem;
+            max-width: 550px; color: var(--text-secondary); margin-top: 1.2rem;
+            animation: fadeIn 1s ease-out 0.5s backwards;
+        }
+
+        .scroll-down-arrow {
+            position: absolute; bottom: 5vh; left: 50%; transform: translateX(-50%);
+            animation: bounce 2s infinite, fadeIn 1s ease-out 1.5s backwards;
+        }
+        .scroll-down-arrow svg { width: 30px; height: 30px; color: var(--text-secondary); opacity: 0.6; }
+
+        #download.download-cta {
+            background: var(--card-bg); border: 1px solid var(--border-color);
+            border-radius: 20px; padding: 2.5rem 1.5rem; backdrop-filter: blur(10px);
+            display: flex; flex-direction: column; align-items: center; gap: 1rem;
+            box-shadow: 0 0 30px rgba(0, 245, 195, 0.1);
+        }
+        
+        .section-title {
+            font-size: 1.8rem;
+            font-weight: 600; margin-bottom: 2rem; padding-bottom: 0.8rem; position: relative;
+        }
+        .section-title::after {
+            content: ''; position: absolute; bottom: 0; left: 50%; transform: translateX(-50%);
+            width: 70px; height: 3px;
+            background: linear-gradient(90deg, var(--primary-glow), var(--secondary-glow));
+            border-radius: 2px; box-shadow: 0 0 15px var(--primary-glow);
+        }
+
+        .download-button {
+            display: inline-flex; align-items: center; gap: 0.8rem;
+            background: linear-gradient(90deg, var(--primary-glow), var(--secondary-glow));
+            color: #fff; font-size: 1.05rem;
+            font-weight: 600; padding: 0.8rem 2rem;
+            border-radius: 50px; text-decoration: none;
+            text-shadow: 0 0 10px rgba(0,0,0,0.4);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            position: relative; overflow: hidden;
+        }
+        .download-button::before {
+            content: ''; position: absolute; top:0; left:-100%; width:50%; height:100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+            transform: skewX(-30deg); transition: left 0.8s cubic-bezier(0.19, 1, 0.22, 1);
+        }
+        .download-button:hover::before { left: 150%; }
+        .download-button:hover { transform: scale(1.05); box-shadow: 0 0 25px var(--primary-glow), 0 0 40px var(--secondary-glow); }
+        .download-button.disabled { background: #4b5563; cursor: not-allowed; }
+        #version-info { font-size: 0.85rem; }
+
+        /* 新增：更新日志样式 */
+        .update-log-container {
+            width: 100%;
+            max-width: 550px;
+            margin-top: 1.5rem;
+            text-align: left;
+            padding: 1rem 1.5rem;
+            background: rgba(0,0,0,0.2);
+            border-left: 3px solid var(--primary-glow);
+            border-radius: 0 8px 8px 0;
+            opacity: 0;
+            transition: opacity 0.5s ease-in;
+            max-height: 0;
+            overflow: hidden;
+        }
+        .update-log-container.visible {
+            opacity: 1;
+            max-height: 500px; /* 允许扩展的高度 */
+             transition: opacity 0.5s ease-in, max-height 0.5s ease-in-out;
+        }
+        #update-log-content {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            white-space: pre-wrap; /* 关键：保留换行符 */
+            line-height: 1.6;
+        }
+        #update-log-content::before {
+            content: '最新更新：';
+            font-weight: 600;
+            color: var(--text-primary);
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+
+
+        .features-grid { display: grid; grid-template-columns: 1fr; gap: 1.5rem; width: 100%; }
+
+        .feature-card {
+            background: var(--card-bg); border-radius: 16px;
+            padding: 1.8rem 1.5rem;
+            text-align: left; backdrop-filter: blur(12px); position: relative;
+            overflow: hidden; border: 1px solid transparent; transition: transform 0.4s ease;
+            opacity: 0; transform: translateY(30px);
+        }
+        .feature-card::before {
+            content: ""; position: absolute; top:0;left:0;right:0;bottom:0;
+            border-radius: 16px; border: 1px solid transparent;
+            background: linear-gradient(var(--bg-color), var(--bg-color)) padding-box,
+                        linear-gradient(135deg, var(--primary-glow), var(--secondary-glow)) border-box;
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor; mask-composite: exclude; opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+        .feature-card:hover { transform: translateY(-8px); }
+        .feature-card:hover::before { opacity: 1; }
+        .feature-card.reveal { opacity: 1; transform: translateY(0); }
+        
+        .feature-card h3 {
+            font-size: 1.2rem;
+            margin-bottom: 1.2rem; display: flex; align-items: center; gap: 0.8rem;
+        }
+        .feature-card h3 svg { width: 24px; height: 24px; flex-shrink: 0; color: var(--primary-glow); }
+        
+        .feature-card ul { list-style: none; padding-left: 0; }
+        .feature-card ul li {
+            font-size: 0.85rem;
+            margin-bottom: 1rem; display: flex; align-items: flex-start; gap: 0.8rem;
+        }
+        .feature-card ul li .icon {
+            flex-shrink: 0; width: 20px; height: 20px;
+            color: var(--primary-glow); margin-top: 3px; opacity: 0.8;
+        }
+        .feature-card ul li .text-content { flex-grow: 1; }
+        .feature-card ul li strong {
+            display: block; color: var(--text-primary);
+            font-weight: 600; font-size: 0.95rem;
+        }
+        .feature-card ul li span { color: var(--text-secondary); }
+
+        .site-footer {
+            background-color: #080716; padding: 3rem 0 1.5rem 0;
+            border-top: 1px solid var(--border-color); position: relative;
+        }
+        .site-footer::before {
+            content:''; position: absolute; top:-1px; left:0; width:100%; height:3px;
+            background: linear-gradient(90deg, transparent, var(--primary-glow), var(--secondary-glow), transparent);
+            opacity: 0.5;
+        }
+        .footer-container { width: 90%; max-width: 1100px; margin: 0 auto; display: flex; flex-direction: column; gap: 2rem; }
+        .footer-content { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 2rem; }
+        .footer-column { flex: 1; min-width: 200px; }
+        .footer-column h4 { font-size: 1rem; margin-bottom: 1rem; position: relative; padding-bottom: 0.5rem; }
+        .footer-column h4::after { content:''; position:absolute; bottom:0; left:0; width:25px; height:2px; background-color: var(--primary-glow); }
+        .footer-column p, .footer-column a { color: var(--text-secondary); font-size: 0.85rem; text-decoration: none; }
+        .footer-column ul { list-style: none; } .footer-column ul li { margin-bottom: 0.6rem; }
+        .footer-column ul a { transition: color 0.3s ease, padding-left 0.3s ease; }
+        .footer-column ul a:hover { color: var(--primary-glow); padding-left: 5px; }
+        .footer-bottom { text-align: center; padding-top: 2rem; border-top: 1px solid rgba(255,255,255,0.1); font-size: 0.8rem; }
+        
+        @keyframes gradient-text-flow { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
+        @keyframes fadeIn { from{opacity:0} to{opacity:1} }
+        @keyframes bounce { 0%,20%,50%,80%,100%{transform:translate(-50%, 0)} 40%{transform:translate(-50%, -15px)} 60%{transform:translate(-50%, -7px)} }
+
+        @media (min-width: 768px) {
+            .hero h2 { font-size: 3.2rem; }
+            .section-title { font-size: 2.2rem; }
+            .features-grid { grid-template-columns: repeat(2, 1fr); }
+            .footer-content { text-align: left; }
+            .footer-column h4::after { left: 0; transform: none; }
+        }
+        @media (min-width: 1024px) {
+            .features-grid { grid-template-columns: repeat(3, 1fr); }
+        }
+    </style>
+</head>
+<body>
+    <canvas id="particle-canvas"></canvas>
+
+    <main class="container">
+        <section class="hero">
+            <h2>GitHub 仓库管理器</h2>
+            <p class="t subtitle"></p>
+            <p class="subtitle">一个专为移动端打造的、功能全面的 GitHub 工作站。它将桌面级的管理能力浓缩于指尖，用流畅的设计与强大的功能，重新定义您的移动代码体验。</p>
+<script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+<span id="busuanzi_container_site_pv">本站总访问量<span id="busuanzi_value_site_pv"></span>次</span>
+
+
+            <a href="#download" class="scroll-down-arrow" aria-label="Scroll down">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" /></svg>
+            </a>
+        </section>
+
+        <section id="download" class="download-cta">
+            <h2 class="section-title">即刻下载，开启新篇</h2>
+            <a id="download-btn" class="download-button disabled" href="#" target="_blank" rel="noopener noreferrer">
+                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                <span>正在获取链接...</span>
+            </a>
+            <p id="version-info">正在检查最新版本...</p>
+            <!-- 新增：用于显示更新日志的容器 -->
+            <div id="update-log-container" class="update-log-container">
+                <p id="update-log-content"></p>
+            </div>
+        </section>
+        
+        <section id="features">
+            <h2 class="section-title">释放您的代码潜能</h2>
+            <div class="features-grid">
+                
+                <div class="feature-card">
+                    <h3>
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 21h16.5M4.5 3h15M5.25 3v18m13.5-18v18M9 6.75h6.375M9 12h6.375m-6.375 5.25h6.375M5.25 6.75h.008v.008H5.25V6.75Zm.75 4.5h.008v.008h-.008v-.008Zm-.75 5.25h.008v.008H5.25v-.008Z" /></svg>
+                        全方位仓库管理
+                    </h3>
+                    <ul>
+                        <li>
+                            <svg class="icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.821 16.29a3.75 3.75 0 0 1-.697-2.125V7.125A3.75 3.75 0 0 1 7.125 3.375h9.75A3.75 3.75 0 0 1 20.625 7.125v7.04c0 .822-.315 1.594-.878 2.125l-2.01 2.01a.75.75 0 0 1-1.06 0l-2.01-2.01a3.75 3.75 0 0 1-.707-2.125V11.25a.75.75 0 0 0-1.5 0v3.04c0 .822-.315 1.594-.878 2.125l-2.01 2.01a.75.75 0 0 1-1.06 0l-2.01-2.01Z" /></svg>
+                            <div class="text-content"><strong>全局掌控</strong><span>清晰的列表与实时搜索，让您在百千仓库中也能瞬时定位目标。</span></div>
+                        </li>
+                        <li>
+                            <svg class="icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 11.667 0l3.181-3.183m-4.991-2.691v4.992h4.992m-16.702 0v4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 11.667 0l3.181-3.183" /></svg>
+                            <div class="text-content"><strong>生命周期管理</strong><span>轻松完成仓库的创建、重命名和删除，所有操作都经过精心设计，既安全又直观。</span></div>
+                        </li>
+                        <li>
+                            <svg class="icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.332A48.36 48.36 0 0 0 12 9.75c-2.551 0-5.056.2-7.5.582V21M3 21h18" /></svg>
+                            <div class="text-content"><strong>一键建站</strong><span>内置 GitHub Pages 功能，一键将仓库发布为个人网站，与世界分享您的创意。</span></div>
+                        </li>
+                    </ul>
+                </div>
+                
+                <div class="feature-card">
+                    <h3>
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" /></svg>
+                        精细化文件操作
+                    </h3>
+                     <ul>
+                        <li>
+                            <svg class="icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 0 1 6 3.75h2.25A2.25 2.25 0 0 1 10.5 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6a2.25 2.25 0 0 1-2.25-2.25V6ZM3.75 15.75A2.25 2.25 0 0 1 6 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25H6A2.25 2.25 0 0 1 3.75 18v-2.25ZM13.5 6a2.25 2.25 0 0 1 2.25-2.25H18A2.25 2.25 0 0 1 20.25 6v2.25A2.25 2.25 0 0 1 18 10.5h-2.25a2.25 2.25 0 0 1-2.25-2.25V6ZM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-2.25A2.25 2.25 0 0 1 13.5 18v-2.25Z" /></svg>
+                            <div class="text-content"><strong>双重视图</strong><span>在优雅的列表和直观的网格视图（支持图片预览）之间自由切换，舒适地浏览项目。</span></div>
+                        </li>
+                        <li>
+                            <svg class="icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M17.25 6.75 22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3-4.5 16.5" /></svg>
+                            <div class="text-content"><strong>移动 IDE</strong><span>内置文本编辑器支持手势缩放字体，让您在手机上也能进行代码审查和紧急修复。</span></div>
+                        </li>
+                         <li>
+                            <svg class="icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 10.5v6m3-3H9m4.06-7.19-2.12-2.12a1.5 1.5 0 0 0-1.061-.44H4.5A2.25 2.25 0 0 0 2.25 6v12a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9a2.25 2.25 0 0 0-2.25-2.25h-5.379a1.5 1.5 0 0 1-1.06-.44Z" /></svg>
+                            <div class="text-content"><strong>无缝文件流</strong><span>从新建文件/文件夹，到上传、下载、重命名、删除，所有文件操作一应俱全。</span></div>
+                        </li>
+                        <li>
+                            <svg class="icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 9.75h16.5m-16.5 4.5h16.5m-16.5 4.5h16.5m-16.5-1.875a1.875 1.875 0 0 1-1.875-1.875V7.875c0-1.036.84-1.875 1.875-1.875h16.5c1.036 0 1.875.84 1.875 1.875v8.25c0 1.036-.84 1.875-1.875 1.875H3.75Z" /></svg>
+                            <div class="text-content"><strong>打包下载</strong><span>需要离线处理一整个目录？一键将文件夹打包为 ZIP 文件，极大简化批量获取流程。</span></div>
+                        </li>
+                    </ul>
+                </div>
+                
+                <div class="feature-card">
+                     <h3>
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 21a9.004 9.004 0 0 0 8.716-6.747M12 21a9.004 9.004 0 0 1-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 0 1 7.843 4.582M12 3a8.997 8.997 0 0 0-7.843 4.582m15.686 0A11.953 11.953 0 0 1 12 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0 1 21 12c0 .778-.099 1.533-.284 2.253m0 0A11.953 11.953 0 0 0 12 13.5c2.998 0 5.74 1.1 7.843 2.918m-15.686 0A8.959 8.959 0 0 0 3 12c0-.778.099-1.533.284-2.253m15.432 0c.041.162.08.326.117.493m-15.648 0c-.041-.162-.08-.326-.117-.493" /></svg>
+                        智能代理网络
+                    </h3>
+                    <ul>
+                         <li>
+                            <svg class="icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M11.25 4.5l7.5 7.5-7.5 7.5M11.25 4.5l-7.5 7.5 7.5 7.5" /></svg>
+                            <div class="text-content"><strong>突破限制</strong><span>当 GitHub API 访问受阻时，智能代理系统是您最可靠的后盾，确保连接畅通无阻。</span></div>
+                        </li>
+                        <li>
+                            <svg class="icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09ZM18.259 8.715 18 9.75l-.259-1.035a3.375 3.375 0 0 0-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 0 0 2.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 0 0 2.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 0 0-2.456 2.456Z" /></svg>
+                            <div class="text-content"><strong>智能优选</strong><span>提供订阅链接，即可自动拉取、测试并切换到延迟最低的代理线路，全程无感。</span></div>
+                        </li>
+                         <li>
+                            <svg class="icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 1 1-3 0m3 0a1.5 1.5 0 1 0-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-9.75 0h9.75" /></svg>
+                            <div class="text-content"><strong>专业管理</strong><span>为高级用户提供了专业的代理管理面板，您可以随时手动测试、编辑、删除或指定任一节点。</span></div>
+                        </li>
+                    </ul>
+                </div>
+                
+                <div class="feature-card">
+                    <h3>
+                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 4.5v15m6-15v15m-10.875 0h15.75c.621 0 1.125-.504 1.125-1.125V5.625c0-.621-.504-1.125-1.125-1.125H4.125A1.125 1.125 0 0 0 3 5.625v12.75c0 .621.504 1.125 1.125 1.125Z" /></svg>
+                        高效批量操作
+                    </h3>
+                    <ul>
+                        <li>
+                            <svg class="icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>
+                            <div class="text-content"><strong>多选模式</strong><span>像在电脑上一样，自由勾选多个文件和文件夹，选择状态一目了然。</span></div>
+                        </li>
+                        <li>
+                            <svg class="icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m20.25 7.5-.625 10.632a2.25 2.25 0 0 1-2.247 2.118H6.622a2.25 2.25 0 0 1-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125Z" /></svg>
+                            <div class="text-content"><strong>批量处理</strong><span>对所有选中项目执行一键批量删除或打包下载，极大提升整理和备份仓库的效率。</span></div>
+                        </li>
+                    </ul>
+                </div>
+                <div class="feature-card">
+                    <h3>
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M11.42 15.17 17.25 21A2.652 2.652 0 0 0 21 17.25l-5.877-5.877M11.42 15.17l2.496-3.03c.317-.384.73-.726 1.196-1.02A9.001 9.001 0 0 0 18 9.75c0-5.385-4.365-9.75-9.75-9.75S-1.5 4.365-1.5 9.75 2.865 19.5 8.25 19.5c2.22 0 4.24-.74 5.88-1.97l.31-.22z" /></svg>
+                        灵活分支管理
+                    </h3>
+                    <ul>
+                        <li>
+                            <svg class="icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M7.5 21 3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" /></svg>
+                            <div class="text-content"><strong>可视化切换</strong><span>在清晰的下拉菜单中直观地查看和切换当前仓库的所有分支，告别命令行。</span></div>
+                        </li>
+                        <li>
+                            <svg class="icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v6m3-3H9m12 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>
+                            <div class="text-content"><strong>便捷创建</strong><span>以任意现有分支为蓝本，快速创建新的功能分支，启动您的下一次创新。</span></div>
+                        </li>
+                    </ul>
+                </div>
+                 <div class="feature-card">
+                    <h3>
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-1.007 1.11-.962a8.948 8.948 0 0 0 7.33 6.918c.472.056.883.472.962 1.11a8.948 8.948 0 0 0-6.918 7.33c-.056.472-.472.883-.962 1.11a8.948 8.948 0 0 0-7.33-6.918c-.472-.056-.883-.472-.962-1.11a8.948 8.948 0 0 0 6.918-7.33Z" /></svg>
+                        高度可定制化
+                    </h3>
+                    <ul>
+                        <li>
+                            <svg class="icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.182 15.182a4.5 4.5 0 0 1-6.364 0M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0ZM9 9.75a.75.75 0 0 1 .75-.75h.008a.75.75 0 0 1 0 1.5h-.008A.75.75 0 0 1 9 9.75Zm6 0a.75.75 0 0 1 .75-.75h.008a.75.75 0 0 1 0 1.5h-.008A.75.75 0 0 1 15 9.75Z" /></svg>
+                            <div class="text-content"><strong>个性化身份</strong><span>从手机相册上传您喜爱的图片，作为在应用中独一无二的个性化头像展示。</span></div>
+                        </li>
+                        <li>
+                            <svg class="icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75v4.5m0-4.5h-4.5m4.5 0L15 9m5.25 11.25v-4.5m0 4.5h-4.5m4.5 0L15 15" /></svg>
+                            <div class="text-content"><strong>自定义菜单</strong><span>自由配置长按快捷菜单，将常用操作随心组合，构建最高效的个人工作流。</span></div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+    </main>
+    
+    <footer class="site-footer">
+        <div class="footer-container">
+            <div class="footer-content">
+                <div class="footer-column">
+                    <h4>关于项目</h4>
+                    <p>GitHub 仓库管理器是一个独立的开源项目，致力于为开发者提供最极致的移动端代码管理体验。</p>
+                </div>
+                <div class="footer-column">
+                    <h4>快速导航</h4>
+                    <ul>
+                        <li><a href="#features">核心功能</a></li>
+                        <li><a href="#download">下载应用</a></li>
+                        <li><a href="https://github.com/rjdsq/rjdsq.github.io" target="_blank">项目源码</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h4>免责声明</h4>
+                    <p>本工具通过 GitHub API 进行操作，请确保您的 Token 安全。所有操作均为用户本人行为，开发者不承担任何数据丢失风险。</p>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>2025 &copy; 牡丹君</p>
+                
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        const canvas = document.getElementById('particle-canvas'); const ctx = canvas.getContext('2d'); canvas.width = window.innerWidth; canvas.height = window.innerHeight; let particlesArray; const particleColors = ['#00f5c3', '#ff2e88', '#f0f8ff', '#a9a9d4'];
+        class Particle { constructor(x, y, dX, dY, size, color) { this.x=x; this.y=y; this.directionX=dX; this.directionY=dY; this.size=size; this.color=color; } draw() { ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI*2, false); ctx.fillStyle=this.color; ctx.fill(); } update() { if (this.x > canvas.width || this.x < 0) this.directionX = -this.directionX; if (this.y > canvas.height || this.y < 0) this.directionY = -this.directionY; this.x+=this.directionX; this.y+=this.directionY; this.draw(); } }
+        function initParticles() { particlesArray = []; let num = (canvas.height*canvas.width)/12e3; for(let i=0;i<num;i++){let size=Math.random()*1.5+1,x=Math.random()*(innerWidth-size*4)+size*2,y=Math.random()*(innerHeight-size*4)+size*2,dX=(Math.random()*.3)-.15,dY=(Math.random()*.3)-.15,color=particleColors[Math.floor(Math.random()*particleColors.length)];particlesArray.push(new Particle(x,y,dX,dY,size,color));} }
+        function animateParticles() { requestAnimationFrame(animateParticles); ctx.clearRect(0,0,innerWidth,innerHeight); for(let i=0;i<particlesArray.length;i++) particlesArray[i].update(); }
+        window.addEventListener('resize', ()=>{ canvas.width=innerWidth; canvas.height=innerHeight; initParticles(); }); initParticles(); animateParticles();
+        
+        // 修改后的脚本
+        document.addEventListener('DOMContentLoaded', async () => {
+            const downloadButton = document.getElementById('download-btn');
+            const buttonText = downloadButton.querySelector('span');
+            const versionInfo = document.getElementById('version-info');
+            // 新增：获取更新日志的元素
+            const updateLogContainer = document.getElementById('update-log-container');
+            const updateLogContent = document.getElementById('update-log-content');
+            
+            const configUrl = 'https://raw.githubusercontent.com/rjdsq/rjdsq.github.io/main/proxy/version.json';
+            
+            try {
+                const response = await fetch(`${configUrl}?t=${new Date().getTime()}`);
+                if (!response.ok) throw new Error(`网络响应错误: ${response.status}`);
+                const data = await response.json();
+                
+                if (data.version && data.downloadUrl) {
+                    downloadButton.href = data.downloadUrl;
+                    buttonText.textContent = '下载最新版';
+                    downloadButton.classList.remove('disabled');
+                    versionInfo.textContent = `当前最新版本: v${data.version}`;
+                    
+                    // 新增逻辑：检查并显示更新日志
+                    if (data.updateLog && data.updateLog.trim() !== '') {
+                        updateLogContent.textContent = data.updateLog;
+                        updateLogContainer.classList.add('visible');
+                    }
+                    
+                } else {
+                    throw new Error('版本信息格式不正确');
+                }
+            } catch (error) {
+                console.error('获取更新信息失败:', error);
+                buttonText.textContent = '获取失败';
+                versionInfo.textContent = '无法连接到更新服务器，请稍后重试。';
+            }
+        });
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach((entry) => { if (entry.isIntersecting) entry.target.classList.add('reveal'); });
+        }, { threshold: 0.1 });
+        const elementsToReveal = document.querySelectorAll('.feature-card, .section-divider');
+        elementsToReveal.forEach((el, index) => {
+            let delay = el.classList.contains('feature-card') ? index * 100 : 0;
+            if (window.innerWidth < 768) { delay = 0; }
+            el.style.transition = `opacity 0.6s ease-out ${delay}ms, transform 0.6s ease-out ${delay}ms`;
+            observer.observe(el);
+        });
+    </script>
+        <script>
+        const s = new Date('2025-05-20 20:00:00');
+setInterval(() => {
+  const d = new Date(), diff = d - s,
+        sec = Math.floor(diff / 1000),
+        day = Math.floor(sec / 86400),
+        month = Math.floor(day / 30),     
+        year = Math.floor(month / 12),   
+        remMonth = month % 12,
+        remDay = day % 30,
+        h = Math.floor((sec % 86400) / 3600),
+        m = Math.floor((sec % 3600) / 60),
+        second = sec % 60;
+  
+  let timeStr = '开发距今：';
+  if (year > 0) timeStr += `${year}年`;
+  if (remMonth > 0 || year > 0) timeStr += `${remMonth}月`;
+  if (remDay > 0 || remMonth > 0 || year > 0) timeStr += `${remDay}天`;
+  timeStr += `${h}时${m}分${second}秒`;
+  
+  document.querySelector('.t').textContent = timeStr;
+}, 1000);
+        </script>
+</body>
+</html>
+
