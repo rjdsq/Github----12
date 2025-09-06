@@ -22,7 +22,7 @@
         #particle-canvas { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -1; }
 
         .container {
-            width: 95%; max-width: 1100px; margin: 0 auto;
+            width: 86%; max-width: 1100px; margin: 0 auto;
             display: flex; flex-direction: column; gap: 4rem;
             position: relative; z-index: 1; padding: 2rem 0;
         }
@@ -35,7 +35,7 @@
  
         .hero h2 {
         white-space: nowrap; 
-            font-size: 2.4rem;
+            font-size: 2rem;
             font-weight: 700; letter-spacing: 1px;
             background: linear-gradient(90deg, var(--primary-glow), var(--secondary-glow), #5773ff);
             -webkit-background-clip: text; -webkit-text-fill-color: transparent;
@@ -62,7 +62,7 @@
         }
         
         .section-title {
-            font-size: 1.8rem; 
+            font-size: 1.4rem; 
             font-weight: 600; margin-bottom: 2rem; padding-bottom: 0.8rem; position: relative;
         }
         .section-title::after {
@@ -114,13 +114,13 @@
              transition: opacity 0.5s ease-in, max-height 0.5s ease-in-out;
         }
         #update-log-content {
-            font-size: 0.9rem;
+            font-size: 0.8rem;
             color: var(--text-secondary);
             white-space: pre-wrap; /* 关键：保留换行符 */
             line-height: 1.6;
         }
         #update-log-content::before {
-            content: '最新更新：';
+            content: '更新日志：';
             font-weight: 600;
             color: var(--text-primary);
             display: block;
@@ -136,6 +136,7 @@
             text-align: left; backdrop-filter: blur(12px); position: relative;
             overflow: hidden; border: 1px solid transparent; transition: transform 0.4s ease;
             opacity: 0; transform: translateY(30px);
+            
         }
         .feature-card::before {
             content: ""; position: absolute; top:0;left:0;right:0;bottom:0;
@@ -151,14 +152,14 @@
         .feature-card.reveal { opacity: 1; transform: translateY(0); }
         
         .feature-card h3 {
-            font-size: 1.2rem;
+            font-size: 1rem;
             margin-bottom: 1.2rem; display: flex; align-items: center; gap: 0.8rem;
         }
         .feature-card h3 svg { width: 24px; height: 24px; flex-shrink: 0; color: var(--primary-glow); }
         
         .feature-card ul { list-style: none; padding-left: 0; }
         .feature-card ul li {
-            font-size: 0.85rem;
+            font-size: 0.75rem;
             margin-bottom: 1rem; display: flex; align-items: flex-start; gap: 0.8rem;
         }
         .feature-card ul li .icon {
@@ -214,10 +215,9 @@
     <main class="container">
         <section class="hero">
             <h2>GitHub 仓库管理器</h2>
-            <p id="busuanzi_container_site_pv ">本站总访问量<span id="busuanzi_value_site_pv"></span>次</p>
-            <p class="t subtitle"></p>
-            <p class="subtitle">一个专为移动端打造的、功能全面的 GitHub 工作站。它将桌面级的管理能力浓缩于指尖，用流畅的设计与强大的功能，重新定义您的移动代码体验。</p>
-<script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+            
+            
+            <p class="subtitle">一个专为移动端打造的、功能全面的 GitHub 工作站。将桌面级的管理能力浓缩于指尖，用流畅的设计与强大的功能，重新定义您的移动代码体验。</p>
 
 
 
@@ -367,14 +367,14 @@
             <div class="footer-content">
                 <div class="footer-column">
                     <h4>关于项目</h4>
-                    <p>GitHub 仓库管理器是一个独立的开源项目，致力于为开发者提供最极致的移动端代码管理体验。</p>
+                    <p>GitHub 仓库管理器是一个独立的项目，致力于为开发者提供最极致的移动端代码管理体验。</p>
                 </div>
                 <div class="footer-column">
                     <h4>快速导航</h4>
                     <ul>
                         <li><a href="#features">核心功能</a></li>
                         <li><a href="#download">下载应用</a></li>
-                        <li><a href="https://github.com/rjdsq/rjdsq.github.io" target="_blank">项目源码</a></li>
+                        <li><a href="https://qun.qq.com/universal-share/share?ac=1&authKey=6W3m3KIgWm45qNDAAMs7S0SS5x7/VYfp1zHmChMarlhFZm+fl7q1fZgQsMhSnKI/&busi_data=eyJncm91cENvZGUiOiI3MTkwNTA3ODAiLCJ0b2tlbiI6ImU0RU5NbS9MZFpLcWFVMkU4bWdIUGs4UGhQSGIzZ0Q5a04zK2MreVdtRzNoYVBmV0JVK1hQd1hndUdEVXV3L2QiLCJ1aW4iOiIxNDczNDYwNDExIn0=&data=hlpfJI-lnjgmobgtEiYraWDw6yWVUppG_Er9tA496-TKeDnQf6OZYu22mbemX_TWKn8KExrzezcpD6vz6d9F_g&svctype=4&tempid=h5_group_info" target="_blank">QQ群聊</a></li>
                     </ul>
                 </div>
                 <div class="footer-column">
@@ -385,6 +385,9 @@
             <div class="footer-bottom">
                 <p>2025 &copy; 牡丹君</p>
                 
+                <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+<p id="busuanzi_container_site_pv ">本站总访问量 <span id="busuanzi_value_site_pv"></span> 次</p>
+                <p class="t subtitle"></p>
             </div>
         </div>
     </footer>
