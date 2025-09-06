@@ -42,7 +42,7 @@
             animation: gradient-text-flow 5s ease infinite; background-size: 200% 200%;
         }
 
-        .hero p.subtitle {
+        .hero p {
             font-size: 1rem;
             max-width: 550px; color: var(--text-secondary); margin-top: 1.2rem;
             animation: fadeIn 1s ease-out 0.5s backwards;
@@ -106,10 +106,11 @@
             transition: opacity 0.5s ease-in;
             max-height: 0;
             overflow: hidden;
+            
         }
         .update-log-container.visible {
             opacity: 1;
-            max-height: 500px; /* 允许扩展的高度 */
+            max-height: 100%; /* 允许扩展的高度 */
              transition: opacity 0.5s ease-in, max-height 0.5s ease-in-out;
         }
         #update-log-content {
@@ -213,10 +214,11 @@
     <main class="container">
         <section class="hero">
             <h2>GitHub 仓库管理器</h2>
+            <p id="busuanzi_container_site_pv ">本站总访问量<span id="busuanzi_value_site_pv"></span>次</p>
             <p class="t subtitle"></p>
             <p class="subtitle">一个专为移动端打造的、功能全面的 GitHub 工作站。它将桌面级的管理能力浓缩于指尖，用流畅的设计与强大的功能，重新定义您的移动代码体验。</p>
 <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
-<span id="busuanzi_container_site_pv">本站总访问量<span id="busuanzi_value_site_pv"></span>次</span>
+
 
 
             <a href="#download" class="scroll-down-arrow" aria-label="Scroll down">
